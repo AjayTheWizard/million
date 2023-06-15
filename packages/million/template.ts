@@ -10,7 +10,11 @@ import {
   SetHas$,
 } from './constants';
 import { AbstractBlock } from './types';
-import type { Edit, VNode } from './types';
+import type { Edit, VNode, EditBase } from './types';
+
+function pushEdits(edits: any[], { t, n = null, v = null, h = null, i = null, l = null, p = null, b = null } : EditBase ){
+  edits.push({ t, n, v, h, i, l, p, b })
+}
 
 export const renderToTemplate = (
   vnode: VNode,
@@ -25,8 +29,7 @@ export const renderToTemplate = (
   ) {
     return String(vnode);
   }
-  if (vnode === null || vnode === undefined || vnode === false) return '';
-
+  if(!vnode) return '';
   let props = '';
   let children = '';
   const current: Edit = {
@@ -44,30 +47,21 @@ export const renderToTemplate = (
     
     if (name === 'className') name = 'class';
     if (name === 'htmlFor') name = 'for';
+    
     if (name.startsWith('on')) {
       const isValueHole = '$' in value;
       // Make edits monomorphic
       if (isValueHole) {
-        current.e.push({
+        pushEdits(current.e, {
           /* type */ t: EventFlag,
           /* name */ n: name.slice(2),
-          /* value */ v: null,
-          /* hole */ h: value.$,
-          /* index */ i: null,
-          /* listener */ l: null,
-          /* patch */ p: null,
-          /* block */ b: null,
+          /* hole */ h: value.$
         });
       } else {
-        current.i!.push({
+        pushEdits(current.i, {
           /* type */ t: EventFlag,
           /* name */ n: name.slice(2),
-          /* value */ v: null,
-          /* hole */ h: null,
-          /* index */ i: null,
           /* listener */ l: value,
-          /* patch */ p: null,
-          /* block */ b: null,
         });
       }
 
@@ -77,26 +71,16 @@ export const renderToTemplate = (
     if (value) {
       if (typeof value === 'object' && '$' in value) {
         if (name === 'style' || name.charCodeAt(0) === X_CHAR) {
-          current.e.push({
+          pushEdits(current.e, {
             /* type */ t: name === 'style' ? StyleAttributeFlag : SvgAttributeFlag,
             /* name */ n: name,
-            /* value */ v: null,
-            /* hole */ h: value.$,
-            /* index */ i: null,
-            /* listener */ l: null,
-            /* patch */ p: null,
-            /* block */ b: null,
+            /* hole */ h: value.$
           });
         } else {
-          current.e.push({
+          pushEdits(current.e, {
             /* type */ t: AttributeFlag,
             /* name */ n: name,
-            /* value */ v: null,
-            /* hole */ h: value.$,
-            /* index */ i: null,
-            /* listener */ l: null,
-            /* patch */ p: null,
-            /* block */ b: null,
+            /* hole */ h: value.$
           });
         }
         continue;
@@ -127,28 +111,18 @@ export const renderToTemplate = (
     if (child === null || child === undefined || child === false) continue;
 
     if (typeof child === 'object' && '$' in child) {
-      current.e.push({
+      pushEdits(current.e, {
         /* type */ t: ChildFlag,
-        /* name */ n: null,
-        /* value */ v: null,
         /* hole */ h: child.$,
         /* index */ i,
-        /* listener */ l: null,
-        /* patch */ p: null,
-        /* block */ b: null,
       });
       continue;
     }
 
     if (child instanceof AbstractBlock) {
-      current.i!.push({
+      pushEdits(current.e, {
         /* type */ t: BlockFlag,
-        /* name */ n: null,
-        /* value */ v: null,
-        /* hole */ h: null,
         /* index */ i,
-        /* listener */ l: null,
-        /* patch */ p: null,
         /* block */ b: child,
       });
 
@@ -162,15 +136,10 @@ export const renderToTemplate = (
     ) {
       const value = String(child)
       if (canMergeString) {
-        current.i!.push({
+        pushEdits(current.i, {
           /* type */ t: ChildFlag,
-          /* name */ n: null,
           /* value */ v: value,
-          /* hole */ h: null,
-          /* index */ i,
-          /* listener */ l: null,
-          /* patch */ p: null,
-          /* block */ b: null,
+          /* index */ i
         });
         continue;
       }
