@@ -17,8 +17,8 @@ export const renderToTemplate = (
   edits: Edit[] = [],
   path: number[] = [],
 ): string => {
-  if (typeof vnode === 'string') return vnode;
   if (
+    typeof vnode === 'string' ||
     typeof vnode === 'number' ||
     typeof vnode === 'bigint' ||
     vnode === true
@@ -36,13 +36,14 @@ export const renderToTemplate = (
   };
 
   for (let name in vnode.props) {
-    const value = vnode.props[name];
     if (name === 'key' || name === 'ref' || name === 'children') {
       continue;
     }
+    
+    const value = vnode.props[name]
+    
     if (name === 'className') name = 'class';
     if (name === 'htmlFor') name = 'for';
-
     if (name.startsWith('on')) {
       const isValueHole = '$' in value;
       // Make edits monomorphic
@@ -75,20 +76,9 @@ export const renderToTemplate = (
 
     if (value) {
       if (typeof value === 'object' && '$' in value) {
-        if (name === 'style') {
+        if (name === 'style' || name.charCodeAt(0) === X_CHAR) {
           current.e.push({
-            /* type */ t: StyleAttributeFlag,
-            /* name */ n: name,
-            /* value */ v: null,
-            /* hole */ h: value.$,
-            /* index */ i: null,
-            /* listener */ l: null,
-            /* patch */ p: null,
-            /* block */ b: null,
-          });
-        } else if (name.charCodeAt(0) === X_CHAR) {
-          current.e.push({
-            /* type */ t: SvgAttributeFlag,
+            /* type */ t: name === 'style' ? StyleAttributeFlag : SvgAttributeFlag,
             /* name */ n: name,
             /* value */ v: null,
             /* hole */ h: value.$,
@@ -109,7 +99,6 @@ export const renderToTemplate = (
             /* block */ b: null,
           });
         }
-
         continue;
       }
       if (name === 'style') {
@@ -171,10 +160,7 @@ export const renderToTemplate = (
       typeof child === 'number' ||
       typeof child === 'bigint'
     ) {
-      const value =
-        typeof child === 'number' || typeof child === 'bigint'
-          ? String(child)
-          : child;
+      const value = String(child)
       if (canMergeString) {
         current.i!.push({
           /* type */ t: ChildFlag,
