@@ -69,11 +69,9 @@ export const createEventListener = (
         while (el) {
           const handler = el[key];
           if (handler) {
-            let returnFalse = false;
             if (handler(nativeEventObject) === false) {
-              returnFalse = true;
+              return
             }
-            if (returnFalse) return;
           }
           el = el.parentNode;
         }
